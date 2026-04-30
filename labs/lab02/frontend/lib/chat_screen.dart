@@ -12,34 +12,111 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  // TODO: Add TextEditingController for input
-  // TODO: Add state for messages, loading, and error
-  // TODO: Subscribe to chatService.messageStream
-  // TODO: Implement UI for sending and displaying messages
-  // TODO: Simulate chat logic for tests (current implementation is a simulation)
+  final TextEditingController _messageController = TextEditingController();
+  StreamSubscription<String>? _messageSub;
+
+  bool _isLoading = false;
+  String? _error;
+  final List<String> _messages = [];
 
   @override
   void initState() {
     super.initState();
-    // TODO: Connect to chat service and set up listeners
+    _messageSub = widget.chatService.messageStream.listen((message) {
+      setState(() {
+        _messages.add(message);
+      });
+    });
+    _connect();
+  }
+
+  Future<void> _connect() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      await widget.chatService.connect();
+    } catch (_) {
+      setState(() {
+        _error = 'Connection error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) {
+      setState(() {
+        _error = 'Message is empty';
+      });
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      await widget.chatService.sendMessage(text);
+      _messageController.clear();
+    } catch (_) {
+      setState(() {
+        _error = 'Send error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
-    // TODO: Dispose controllers and subscriptions
+    _messageSub?.cancel();
+    _messageController.dispose();
     super.dispose();
-  }
-
-  void _sendMessage() async {
-    // TODO: Send message using chatService
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Build chat UI with loading, error, and message list
-    return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
-      body: const Center(child: Text('TODO: Implement chat UI')),
+    return Column(
+      children: [
+        if (_isLoading) const LinearProgressIndicator(),
+        if (_error != null) Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(_error!),
+        ),
+        Expanded(
+          child: ListView(
+            children: _messages.map((m) => ListTile(title: Text(m))).toList(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: const InputDecoration(hintText: 'Message'),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: _sendMessage,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

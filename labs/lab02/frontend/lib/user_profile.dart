@@ -12,21 +12,62 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
-  // TODO: Add state for user data, loading, and error
-  // TODO: Fetch user info from userService (simulate for tests)
+  Map<String, String>? _user;
+  bool _isLoading = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    // TODO: Fetch user info and update state
+    _fetchUser();
+  }
+
+  Future<void> _fetchUser() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final user = await widget.userService.fetchUser();
+      if (!mounted) return;
+      setState(() {
+        _user = user;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'error: $e';
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Build user profile UI with loading, error, and user info
-    return Scaffold(
-      appBar: AppBar(title: const Text('User Profile')),
-      body: const Center(child: Text('TODO: Implement user profile UI')),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(child: Text(_error!));
+    }
+    if (_user == null) {
+      return const Center(child: Text('User not found'));
+    }
+    return Column(
+      children: [
+        Text(_user!['name'] ?? ''),
+        Text(_user!['email'] ?? ''),
+        TextButton(
+          onPressed: () {
+            _fetchUser();
+          },
+          child: const Text('Refresh'),
+        ),
+      ],
     );
   }
 }
