@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-// ErrDivisionByZero is returned when attempting to divide by zero
+// ErrDivisionByZero is returned when attempting to divide by zero_1
 var ErrDivisionByZero = errors.New("division by zero")
 
 // Add adds two float64 numbers
