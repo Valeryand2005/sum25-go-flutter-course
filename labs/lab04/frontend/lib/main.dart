@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'services/preferences_service.dart';
+import 'services/database_service.dart';
+import 'services/secure_storage_service.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -7,13 +10,14 @@ void main() async {
 
   // TODO: Initialize services
   try {
-    // TODO: Initialize PreferencesService
     await PreferencesService.init();
-
-    // TODO: Add any other service initialization here
-    // For example: await DatabaseService.database;
+    // On web, defer SQLite initialization to actual usage path.
+    if (!kIsWeb) {
+      await DatabaseService.init();
+    }
+    await SecureStorageService.init();
   } catch (e) {
-    print('Error initializing services: $e');
+    debugPrint('Error initializing services: $e');
   }
 
   runApp(const MyApp());

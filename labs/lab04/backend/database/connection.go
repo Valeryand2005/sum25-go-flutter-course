@@ -2,10 +2,11 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
+	"path/filepath"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 // Config holds database configuration
@@ -28,6 +29,12 @@ func DefaultConfig() *Config {
 	}
 }
 
+// sqliteDSN returns a DSN for modernc.org/sqlite (sql.Open name "sqlite").
+func sqliteDSN(path string) string {
+	p := filepath.ToSlash(filepath.Clean(path))
+	return "file:" + p + "?_pragma=busy_timeout(5000)"
+}
+
 // TODO: Implement InitDB function
 func InitDB() (*sql.DB, error) {
 	// TODO: Initialize database connection with SQLite
@@ -35,7 +42,22 @@ func InitDB() (*sql.DB, error) {
 	// - Apply connection pool configuration from DefaultConfig()
 	// - Test connection with Ping()
 	// - Return the database connection or error
-	return nil, fmt.Errorf("TODO: implement InitDB function")
+	config := DefaultConfig()
+	db, err := sql.Open("sqlite", sqliteDSN(config.DatabasePath))
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetMaxOpenConns(config.MaxOpenConns)
+	db.SetMaxIdleConns(config.MaxIdleConns)
+	db.SetConnMaxLifetime(config.ConnMaxLifetime)
+	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
 
 // TODO: Implement InitDBWithConfig function
@@ -45,7 +67,21 @@ func InitDBWithConfig(config *Config) (*sql.DB, error) {
 	// - Apply all connection pool settings
 	// - Test connection with Ping()
 	// - Return the database connection or error
-	return nil, fmt.Errorf("TODO: implement InitDBWithConfig function")
+	db, err := sql.Open("sqlite", sqliteDSN(config.DatabasePath))
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetMaxOpenConns(config.MaxOpenConns)
+	db.SetMaxIdleConns(config.MaxIdleConns)
+	db.SetConnMaxLifetime(config.ConnMaxLifetime)
+	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
 
 // TODO: Implement CloseDB function
@@ -54,5 +90,8 @@ func CloseDB(db *sql.DB) error {
 	// - Check if db is not nil
 	// - Close the database connection
 	// - Return any error that occurs
-	return fmt.Errorf("TODO: implement CloseDB function")
+	if db == nil {
+		return errors.New("pointer is nil")
+	}
+	return db.Close()
 }
