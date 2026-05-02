@@ -3,7 +3,6 @@ package security
 import (
 	"errors"
 	"regexp"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
