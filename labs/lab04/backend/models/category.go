@@ -3,7 +3,6 @@ package models
 import (
 	"log"
 	"time"
-
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
