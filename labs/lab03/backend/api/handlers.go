@@ -17,7 +17,6 @@ import (
 
 // Handler holds the storage instance
 type Handler struct {
-	// TODO: Add storage field of type *storage.MemoryStorage
 	Storage *storage.MemoryStorage
 }
 
